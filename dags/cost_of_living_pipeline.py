@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta, date
 from airflow import DAG
 from airflow.providers.amazon.aws.operators.lambda_function import LambdaInvokeFunctionOperator
@@ -31,7 +32,7 @@ with DAG(
         task_id='load-data-to-snowflake',
         function_name='load-cost-of-living-data-to-snowflake',
         aws_conn_id='my_aws_connection',
-        payload={'extractDate': str(date.today())} # make this overridable using Airflow vars
+        payload=json.dumps({'extractDate': str(date.today())}) #TODO make this overridable using Airflow vars
     )
 
     t1 >> t2
