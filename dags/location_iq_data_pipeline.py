@@ -24,8 +24,7 @@ with DAG(
     extract_col = LambdaInvokeFunctionOperator(
         task_id='extract-cost-of-living',
         function_name='extract-cost-of-living-data',
-        invocation_type='Event',
-        aws_conn_id='my_aws_connection'
+        aws_conn_id='my_aws_connection',
     )
 
     load_col = LambdaInvokeFunctionOperator(
@@ -38,8 +37,7 @@ with DAG(
     extract_crime = LambdaInvokeFunctionOperator(
         task_id='extract-crime',
         function_name='extract-crime-data',
-        invocation_type='Event',
-        aws_conn_id='my_aws_connection'
+        aws_conn_id='my_aws_connection',
     )
 
     load_crime = LambdaInvokeFunctionOperator(
@@ -52,8 +50,7 @@ with DAG(
     extract_listing = LambdaInvokeFunctionOperator(
         task_id='extract-listing',
         function_name='extract-listing-data',
-        invocation_type='Event',
-        aws_conn_id='my_aws_connection'
+        aws_conn_id='my_aws_connection',
     )
 
     load_listing = LambdaInvokeFunctionOperator(
