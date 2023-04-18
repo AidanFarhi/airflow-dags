@@ -21,12 +21,18 @@ with DAG(
     catchup=False,
 ) as dag:
 
+    # TODO: try triggering spark jar that is in private s3 bucket
     create_serverless_app = EmrServerlessCreateApplicationOperator(
         task_id="create_emr_serverless_app",
         release_label="emr-6.6.0",
         job_type="SPARK",
         config={
-            "name": "new_application"
+            "name": "new_application",
+            "sparkSubmitJobDriver": {
+                "entryPoint": "s3://<your-bucket>/<path-to>/your-spark-job.jar",
+                "entryPointArguments": ["arg1", "arg2"],
+                "sparkSubmitParameters": "--conf spark.executorEnv.YOUR_ENV_VAR=your_env_value"
+            }
         },
         aws_conn_id="my_aws_connection"
     )
