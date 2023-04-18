@@ -4,28 +4,40 @@ This is an example dag for a AWS EMR Pipeline with auto steps.
 from datetime import timedelta
 
 from airflow import DAG
-from airflow.providers.amazon.aws.operators.emr import EmrCreateJobFlowOperator
+from airflow.providers.amazon.aws.operators.emr import (
+    EmrServerlessCreateJobRunOperator, 
+    EmrServerlessWaitForJobRunOperator
+)
+
 from airflow.providers.amazon.aws.sensors.emr import EmrJobFlowSensor
 from airflow.operators.bash import BashOperator
 
 from airflow.utils.dates import days_ago
 
-# TODO: Speficy a log s3 URI and set the EmrJobFlowSensor to wait a few minutes before trying to find the log bucket.
 
-SPARK_STEPS = [
-    {
-        'Name': 'calculate_pi',
-        'ActionOnFailure': 'CONTINUE',
-        'HadoopJarStep': {
-            'Jar': 'command-runner.jar',
-            'Args': ['/usr/lib/spark/bin/run-example', 'SparkPi', '10'],
+SPARK_STEPS = [    
+    {        
+        'Name': 'SparkPi',        
+        'ActionOnFailure': 'CONTINUE',        
+        'HadoopJarStep': {            
+            'Jar': 'command-runner.jar',            
+            'Args': [
+                'spark-submit', 
+                '--deploy-mode', 'cluster', 
+                '--class', 'org.apache.spark.examples.SparkPi', 
+                '--master', 'yarn', 
+                '--executor-memory', '1g', 
+                '--num-executors', '2', 
+                '/usr/lib/spark/examples/jars/spark-examples.jar', 
+                '100'
+            ],
         },
     }
 ]
 
 JOB_FLOW_OVERRIDES = {
     'Name': 'PiCalc',
-    'ReleaseLabel': 'emr-5.29.0',
+    'ReleaseLabel': 'emr-6.10.0',
     'Instances': {
         'InstanceGroups': [
             {
@@ -42,8 +54,8 @@ JOB_FLOW_OVERRIDES = {
     'Steps': SPARK_STEPS,
     'JobFlowRole': 'EMR_EC2_DefaultRole',
     'ServiceRole': 'EMR_DefaultRole',
+    'LogUri': 's3://afarhidev-log-bucket/emr-logs/'
 }
-# [END howto_operator_emr_automatic_steps_config]
 
 with DAG(
     dag_id='emr_job_flow_automatic_steps_dag',
@@ -56,15 +68,14 @@ with DAG(
     },
     dagrun_timeout=timedelta(hours=2),
     start_date=days_ago(2),
-    schedule_interval='0 3 * * *',
+    schedule_interval='0 13 * * *',
     tags=['example'],   
 ) as dag:
 
-    job_flow_creator = EmrCreateJobFlowOperator(
+    job_flow_creator = EmrServerlessCreateJobRunOperator(
         task_id='create_job_flow',
         job_flow_overrides=JOB_FLOW_OVERRIDES,
-        aws_conn_id='my_aws_connection',
-        # emr_conn_id='my_aws_connection',
+        aws_conn_id='my_aws_connection'
     )
 
     # Wait for EMR cluster to reach a terminal state
@@ -72,7 +83,7 @@ with DAG(
         task_id='watch_job_flow',
         aws_conn_id='my_aws_connection',
         job_flow_id="{{ task_instance.xcom_pull(task_ids='create_job_flow', key='return_value') }}",
-        timeout=10_000,
+        timeout=1_800,
     )
 
     # Final task to mark the DAG as successful
