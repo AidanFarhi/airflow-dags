@@ -46,6 +46,12 @@ with DAG(
                 "entryPoint": spark_job_s3_path,
             }
         },
+        configuration_overrides={
+            # TODO: add all environment variables from Airflow vars
+            "environment": {
+                "MY_ENV_VAR": "my_value"
+            }
+        }
     )
 
     # Delete the EMR Serverless application
