@@ -47,12 +47,30 @@ with DAG(
         },
         configuration_overrides={
             "applicationConfiguration": [
-                ("environment.SNOWFLAKE_DATABASE", Variable.get("SNOWFLAKE_DATABASE")),
-                ("environment.SNOWFLAKE_PASSWORD", Variable.get("SNOWFLAKE_PASSWORD")),
-                ("environment.SNOWFLAKE_SCHEMA", Variable.get("SNOWFLAKE_SCHEMA")),
-                ("environment.SNOWFLAKE_URL", Variable.get("SNOWFLAKE_URL")),
-                ("environment.SNOWFLAKE_USER", Variable.get("SNOWFLAKE_USER")),
-                ("environment.SNOWFLAKE_WAREHOUSE", Variable.get("SNOWFLAKE_WAREHOUSE")),
+                {
+                    "Classification": "export",
+                    "Properties": { "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE") }
+                },
+                {
+                    "Classification": "export",
+                    "Properties": { "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD") }
+                },
+                {
+                    "Classification": "export",
+                    "Properties": { "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA") }
+                },
+                {
+                    "Classification": "export",
+                    "Properties": { "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL") }
+                },
+                {
+                    "Classification": "export",
+                    "Properties": { "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER") }
+                },
+                {
+                    "Classification": "export",
+                    "Properties": { "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE") }
+                }
             ],
             "monitoringConfiguration": {
                 "s3MonitoringConfiguration": {"logUri": Variable.get("S3_LOG_BUCKET_URI")}
