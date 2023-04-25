@@ -20,7 +20,7 @@ with DAG(
         'retries': 0,
     },
     description='Run Spark job on EMR Serverless',
-    schedule_interval=timedelta(days=7),
+    schedule_interval=timedelta(days=30),
     start_date=datetime(2023, 4, 18),
     catchup=False,
 ) as dag:
@@ -37,21 +37,24 @@ with DAG(
 
     run_spark_job = EmrServerlessStartJobOperator(
         task_id="run_location_summary_etl_job",
+        aws_conn_id="my_aws_connection",
         application_id="{{ task_instance.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
-        # execution_role_arn=Variable.get("EMR_EXECUTION_ROLE_ARN"),
+        execution_role_arn=Variable.get("EMR_EXECUTION_ROLE_ARN"),
         job_driver={
             "sparkSubmit": {
                 "entryPoint": Variable.get("SPARK_JOB_S3_PATH"),
             }
         },
         configuration_overrides={
-            "environment": {
-                "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE"),
-                "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD"),
-                "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA"),
-                "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL"),
-                "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER"),
-                "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE")
+            "applicationConfiguration": {
+                "environment": {
+                    "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE"),
+                    "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD"),
+                    "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA"),
+                    "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL"),
+                    "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER"),
+                    "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE")
+                },
             },
             "monitoringConfiguration": {
                 "s3MonitoringConfiguration": {"logUri": Variable.get("S3_LOG_BUCKET_URI")}
