@@ -1,15 +1,14 @@
 from datetime import datetime, timedelta
 from airflow import DAG
+from airflow.models import Variable
 from airflow.providers.amazon.aws.operators.emr import (
     EmrServerlessCreateApplicationOperator,
     EmrServerlessStartJobOperator,
     EmrServerlessDeleteApplicationOperator
 )
+from airflow.providers.amazon.aws.sensors.emr import EmrServerlessJobSensor
 
-# Define the S3 path to the Spark job JAR
-spark_job_s3_path = 's3://afarhidev-private-jars/artifacts/location-iq/location-summary-etl-LATEST.jar'
 
-# Define the DAG
 with DAG(
     'emr_serverless_dag',
     default_args={
@@ -26,40 +25,50 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    # Create the EMR Serverless application
     create_serverless_app = EmrServerlessCreateApplicationOperator(
         task_id="create_emr_serverless_app",
         release_label="emr-6.6.0",
         job_type="SPARK",
         config={
-            "name": "new_application"
+            "name": "etl_application"
         },
         aws_conn_id="my_aws_connection"
     )
 
-    # Start Spark job
     run_spark_job = EmrServerlessStartJobOperator(
         task_id="run_location_summary_etl_job",
         application_id="{{ task_instance.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
+        # execution_role_arn=Variable.get("EMR_EXECUTION_ROLE_ARN"),
         job_driver={
             "sparkSubmit": {
-                "entryPoint": spark_job_s3_path,
+                "entryPoint": Variable.get("SPARK_JOB_S3_PATH"),
             }
         },
         configuration_overrides={
-            # TODO: add all environment variables from Airflow vars
             "environment": {
-                "MY_ENV_VAR": "my_value"
+                "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE"),
+                "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD"),
+                "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA"),
+                "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL"),
+                "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER"),
+                "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE")
+            },
+            "monitoringConfiguration": {
+                "s3MonitoringConfiguration": {"logUri": Variable.get("S3_LOG_BUCKET_URI")}
             }
         }
     )
 
-    # Delete the EMR Serverless application
+    wait_for_job = EmrServerlessJobSensor(
+        task_id="wait_for_job",
+        application_id="{{ task_instance.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
+        job_run_id="{{ task_instance.xcom_pull(task_ids='run_location_summary_etl_job', key='return_value') }}",
+    )   
+
     delete_app = EmrServerlessDeleteApplicationOperator(
         task_id="delete_emr_serverless_app",
         aws_conn_id="my_aws_connection",
         application_id="{{ task_instance.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
     )
 
-    # Define the DAG dependencies
-    create_serverless_app >> run_spark_job  >> delete_app
+    create_serverless_app >> run_spark_job >> wait_for_job >> delete_app
