@@ -46,16 +46,14 @@ with DAG(
             }
         },
         configuration_overrides={
-            "applicationConfiguration": {
-                "environment": {
-                    "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE"),
-                    "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD"),
-                    "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA"),
-                    "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL"),
-                    "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER"),
-                    "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE")
-                },
-            },
+            "applicationConfiguration": [
+                ("environment.SNOWFLAKE_DATABASE", Variable.get("SNOWFLAKE_DATABASE")),
+                ("environment.SNOWFLAKE_PASSWORD", Variable.get("SNOWFLAKE_PASSWORD")),
+                ("environment.SNOWFLAKE_SCHEMA", Variable.get("SNOWFLAKE_SCHEMA")),
+                ("environment.SNOWFLAKE_URL", Variable.get("SNOWFLAKE_URL")),
+                ("environment.SNOWFLAKE_USER", Variable.get("SNOWFLAKE_USER")),
+                ("environment.SNOWFLAKE_WAREHOUSE", Variable.get("SNOWFLAKE_WAREHOUSE")),
+            ],
             "monitoringConfiguration": {
                 "s3MonitoringConfiguration": {"logUri": Variable.get("S3_LOG_BUCKET_URI")}
             }
