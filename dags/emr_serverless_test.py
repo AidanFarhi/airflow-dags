@@ -48,28 +48,14 @@ with DAG(
         configuration_overrides={
             "applicationConfiguration": [
                 {
-                    "Classification": "export",
-                    "Properties": { "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE") }
-                },
-                {
-                    "Classification": "export",
-                    "Properties": { "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD") }
-                },
-                {
-                    "Classification": "export",
-                    "Properties": { "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA") }
-                },
-                {
-                    "Classification": "export",
-                    "Properties": { "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL") }
-                },
-                {
-                    "Classification": "export",
-                    "Properties": { "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER") }
-                },
-                {
-                    "Classification": "export",
-                    "Properties": { "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE") }
+                    "properties": { 
+                        "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE"),
+                        "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD"),
+                        "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA"),
+                        "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL"),
+                        "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER"),
+                        "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE")
+                    }
                 }
             ],
             "monitoringConfiguration": {
