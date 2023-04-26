@@ -8,6 +8,8 @@ from airflow.providers.amazon.aws.operators.emr import (
 )
 from airflow.providers.amazon.aws.sensors.emr import EmrServerlessJobSensor
 
+# TODO: figure out if rewrite of spark job is needed. explore taking in cli args for the snowflake
+#       config.
 
 with DAG(
     'emr_serverless_dag',
@@ -38,26 +40,17 @@ with DAG(
     run_spark_job = EmrServerlessStartJobOperator(
         task_id="run_location_summary_etl_job",
         aws_conn_id="my_aws_connection",
-        application_id="{{ task_instance.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
+        application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
         execution_role_arn=Variable.get("EMR_EXECUTION_ROLE_ARN"),
         job_driver={
             "sparkSubmit": {
                 "entryPoint": Variable.get("SPARK_JOB_S3_PATH"),
+                "sparkSubmitParameters": " ".join([
+                    "--class App"
+                ])
             }
         },
         configuration_overrides={
-            "applicationConfiguration": [
-                {
-                    "properties": { 
-                        "SNOWFLAKE_DATABASE": Variable.get("SNOWFLAKE_DATABASE"),
-                        "SNOWFLAKE_PASSWORD": Variable.get("SNOWFLAKE_PASSWORD"),
-                        "SNOWFLAKE_SCHEMA": Variable.get("SNOWFLAKE_SCHEMA"),
-                        "SNOWFLAKE_URL": Variable.get("SNOWFLAKE_URL"),
-                        "SNOWFLAKE_USER": Variable.get("SNOWFLAKE_USER"),
-                        "SNOWFLAKE_WAREHOUSE": Variable.get("SNOWFLAKE_WAREHOUSE")
-                    }
-                }
-            ],
             "monitoringConfiguration": {
                 "s3MonitoringConfiguration": {"logUri": Variable.get("S3_LOG_BUCKET_URI")}
             }
@@ -66,14 +59,15 @@ with DAG(
 
     wait_for_job = EmrServerlessJobSensor(
         task_id="wait_for_job",
-        application_id="{{ task_instance.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
-        job_run_id="{{ task_instance.xcom_pull(task_ids='run_location_summary_etl_job', key='return_value') }}",
+        aws_conn_id="my_aws_connection",
+        application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
+        job_run_id="{{ ti.xcom_pull(task_ids='run_location_summary_etl_job', key='return_value') }}",
     )   
 
     delete_app = EmrServerlessDeleteApplicationOperator(
         task_id="delete_emr_serverless_app",
         aws_conn_id="my_aws_connection",
-        application_id="{{ task_instance.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
+        application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
     )
 
     create_serverless_app >> run_spark_job >> wait_for_job >> delete_app
