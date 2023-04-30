@@ -40,17 +40,15 @@ with DAG(
         job_driver={
             "sparkSubmit": {
                 "entryPoint": Variable.get("SPARK_JOB_S3_PATH"),
-                "sparkSubmitParameters": " ".join(
-                    [
-                        "--class App",
-                        Variable.get("SNOWFLAKE_URL"),
-                        Variable.get("SNOWFLAKE_USER"),
-                        Variable.get("SNOWFLAKE_PASSWORD"),
-                        Variable.get("SNOWFLAKE_DATABASE"),
-                        Variable.get("SNOWFLAKE_SCHEMA"),
-                        Variable.get("SNOWFLAKE_WAREHOUSE"),
-                    ]
-                ),
+                "entryPointArguments": [
+                    Variable.get("SNOWFLAKE_URL"),
+                    Variable.get("SNOWFLAKE_USER"),
+                    Variable.get("SNOWFLAKE_PASSWORD"),
+                    Variable.get("SNOWFLAKE_DATABASE"),
+                    Variable.get("SNOWFLAKE_SCHEMA"),
+                    Variable.get("SNOWFLAKE_WAREHOUSE"),
+                ],
+                "sparkSubmitParameters": "--class App",
             }
         },
         configuration_overrides={
