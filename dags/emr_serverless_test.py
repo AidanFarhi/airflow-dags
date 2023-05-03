@@ -28,7 +28,17 @@ with DAG(
         task_id="create_emr_serverless_app",
         release_label="emr-6.6.0",
         job_type="SPARK",
-        config={"name": "etl_application"},
+        config={
+            "name": "etl_application",
+            "networkConfiguration": {
+                'subnetIds': [
+                    Variable.get("VPC_PRIVATE_SUBNET"),
+                ],
+                'securityGroupIds': [
+                    Variable.get("VPC_EMR_SG"),
+                ]
+            }
+        },
         aws_conn_id="my_aws_connection",
     )
 
