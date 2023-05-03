@@ -31,13 +31,13 @@ with DAG(
         config={
             "name": "etl_application",
             "networkConfiguration": {
-                'subnetIds': [
+                "subnetIds": [
                     Variable.get("VPC_PRIVATE_SUBNET"),
                 ],
-                'securityGroupIds': [
+                "securityGroupIds": [
                     Variable.get("VPC_EMR_SG"),
-                ]
-            }
+                ],
+            },
         },
         aws_conn_id="my_aws_connection",
     )
