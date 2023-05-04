@@ -6,8 +6,6 @@ from airflow.providers.amazon.aws.operators.emr import (
     EmrServerlessStartJobOperator,
     EmrServerlessDeleteApplicationOperator,
 )
-from airflow.providers.amazon.aws.sensors.emr import EmrServerlessJobSensor
-
 
 with DAG(
     "emr_serverless_dag",
@@ -66,17 +64,10 @@ with DAG(
         },
     )
 
-    wait_for_job = EmrServerlessJobSensor(
-        task_id="wait_for_job",
-        aws_conn_id="my_aws_connection",
-        application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
-        job_run_id="{{ ti.xcom_pull(task_ids='run_location_summary_etl_job', key='return_value') }}",
-    )
-
     delete_app = EmrServerlessDeleteApplicationOperator(
         task_id="delete_emr_serverless_app",
         aws_conn_id="my_aws_connection",
         application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
     )
 
-    create_serverless_app >> run_spark_job >> wait_for_job >> delete_app
+    create_serverless_app >> run_spark_job >> delete_app
