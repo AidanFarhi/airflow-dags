@@ -19,7 +19,7 @@ with DAG(
         "retries": 0
     },
     description="Data pipeline for LocationIQ project",
-    schedule=timedelta(days=7),
+    schedule=timedelta(days=60),
     start_date=datetime(2021, 1, 1),
     catchup=False,
     tags=["location-iq"],
