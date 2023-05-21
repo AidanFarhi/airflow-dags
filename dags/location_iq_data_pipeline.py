@@ -28,12 +28,14 @@ with DAG(
         task_id="extract-cost-of-living",
         function_name="extract-cost-of-living-data",
         aws_conn_id="my_aws_connection",
+        retries=3
     )
 
     load_col = LambdaInvokeFunctionOperator(
         task_id="load-cost-of-living",
         function_name="load-cost-of-living-data-to-snowflake",
         aws_conn_id="my_aws_connection",
+        retries=3,
         payload=json.dumps({"extractDate": str(date.today())}),  # TODO make this overridable using Airflow vars
     )
 
@@ -41,12 +43,14 @@ with DAG(
         task_id="extract-crime",
         function_name="extract-crime-data",
         aws_conn_id="my_aws_connection",
+        retries=3
     )
 
     load_crime = LambdaInvokeFunctionOperator(
         task_id="load-crime",
         function_name="load-crime-data-to-snowflake",
         aws_conn_id="my_aws_connection",
+        retries=3,
         payload=json.dumps({"extractDate": str(date.today())}),  # TODO make this overridable using Airflow vars
     )
 
@@ -54,12 +58,14 @@ with DAG(
         task_id="extract-listing",
         function_name="extract-listing-data",
         aws_conn_id="my_aws_connection",
+        retries=3
     )
 
     load_listing = LambdaInvokeFunctionOperator(
         task_id="load-listing",
         function_name="load-listing-data-to-snowflake",
         aws_conn_id="my_aws_connection",
+        retries=3,
         payload=json.dumps({"extractDate": str(date.today())}),  # TODO make this overridable using Airflow vars
     )
 
