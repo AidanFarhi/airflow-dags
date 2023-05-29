@@ -16,7 +16,7 @@ with DAG(
         "email": ["airflow@example.com"],
         "email_on_failure": False,
         "email_on_retry": False,
-        "retries": 0
+        "retries": 0,
     },
     description="Data pipeline for LocationIQ project",
     schedule=timedelta(days=60),
@@ -25,52 +25,46 @@ with DAG(
     tags=["location-iq"],
 ) as dag:
     extract_col = LambdaInvokeFunctionOperator(
-        task_id="extract-cost-of-living",
+        task_id="cost-of-living-ingestion",
         function_name="extract-cost-of-living-data",
         aws_conn_id="my_aws_connection",
-        retries=3
+        retries=3,
     )
 
     load_col = LambdaInvokeFunctionOperator(
-        task_id="load-cost-of-living",
+        task_id="cost-of-living-etl",
         function_name="load-cost-of-living-data-to-snowflake",
         aws_conn_id="my_aws_connection",
         retries=3,
-        payload=json.dumps({"extractDate": str(date.today())}),  # TODO make this overridable using Airflow vars
+        payload=json.dumps({"extractDate": str(date.today())}),
     )
 
     extract_crime = LambdaInvokeFunctionOperator(
-        task_id="extract-crime",
-        function_name="extract-crime-data",
-        aws_conn_id="my_aws_connection",
-        retries=3
+        task_id="crime-ingestion", function_name="extract-crime-data", aws_conn_id="my_aws_connection", retries=3
     )
 
     load_crime = LambdaInvokeFunctionOperator(
-        task_id="load-crime",
+        task_id="crime-etl",
         function_name="load-crime-data-to-snowflake",
         aws_conn_id="my_aws_connection",
         retries=3,
-        payload=json.dumps({"extractDate": str(date.today())}),  # TODO make this overridable using Airflow vars
+        payload=json.dumps({"extractDate": str(date.today())}),
     )
 
     extract_listing = LambdaInvokeFunctionOperator(
-        task_id="extract-listing",
-        function_name="extract-listing-data",
-        aws_conn_id="my_aws_connection",
-        retries=3
+        task_id="listing-ingestion", function_name="extract-listing-data", aws_conn_id="my_aws_connection", retries=3
     )
 
     load_listing = LambdaInvokeFunctionOperator(
-        task_id="load-listing",
+        task_id="listing-etl",
         function_name="load-listing-data-to-snowflake",
         aws_conn_id="my_aws_connection",
         retries=3,
-        payload=json.dumps({"extractDate": str(date.today())}),  # TODO make this overridable using Airflow vars
+        payload=json.dumps({"extractDate": str(date.today())}),
     )
 
     create_serverless_app = EmrServerlessCreateApplicationOperator(
-        task_id="create_emr_serverless_app",
+        task_id="create-emr-serverless-app",
         release_label="emr-6.6.0",
         job_type="SPARK",
         config={
@@ -88,7 +82,7 @@ with DAG(
     )
 
     run_spark_job = EmrServerlessStartJobOperator(
-        task_id="run_location_summary_etl_job",
+        task_id="run-location-summary-etl-job",
         aws_conn_id="my_aws_connection",
         application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
         execution_role_arn=Variable.get("EMR_EXECUTION_ROLE_ARN"),
@@ -112,7 +106,7 @@ with DAG(
     )
 
     delete_app = EmrServerlessDeleteApplicationOperator(
-        task_id="delete_emr_serverless_app",
+        task_id="delete-emr-serverless-app",
         aws_conn_id="my_aws_connection",
         application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
     )
