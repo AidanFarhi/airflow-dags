@@ -25,7 +25,7 @@ with DAG(
     tags=["location-iq"],
 ) as dag:
     extract_col = LambdaInvokeFunctionOperator(
-        task_id="cost-of-living-ingestion",
+        task_id="ingest-cost-of-living",
         function_name="extract-cost-of-living-data",
         aws_conn_id="my_aws_connection",
         retries=3,
@@ -40,7 +40,10 @@ with DAG(
     )
 
     extract_crime = LambdaInvokeFunctionOperator(
-        task_id="crime-ingestion", function_name="extract-crime-data", aws_conn_id="my_aws_connection", retries=3
+        task_id="ingest-crime", 
+        function_name="extract-crime-data", 
+        aws_conn_id="my_aws_connection", 
+        retries=3
     )
 
     load_crime = LambdaInvokeFunctionOperator(
@@ -52,7 +55,10 @@ with DAG(
     )
 
     extract_listing = LambdaInvokeFunctionOperator(
-        task_id="listing-ingestion", function_name="extract-listing-data", aws_conn_id="my_aws_connection", retries=3
+        task_id="ingest-listing", 
+        function_name="extract-listing-data", 
+        aws_conn_id="my_aws_connection", 
+        retries=3
     )
 
     load_listing = LambdaInvokeFunctionOperator(
@@ -84,7 +90,7 @@ with DAG(
     run_spark_job = EmrServerlessStartJobOperator(
         task_id="run-location-summary-etl-job",
         aws_conn_id="my_aws_connection",
-        application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
+        application_id="{{ ti.xcom_pull(task_ids='create-emr-serverless-app', key='return_value') }}",
         execution_role_arn=Variable.get("EMR_EXECUTION_ROLE_ARN"),
         job_driver={
             "sparkSubmit": {
@@ -108,7 +114,7 @@ with DAG(
     delete_app = EmrServerlessDeleteApplicationOperator(
         task_id="delete-emr-serverless-app",
         aws_conn_id="my_aws_connection",
-        application_id="{{ ti.xcom_pull(task_ids='create_emr_serverless_app', key='return_value') }}",
+        application_id="{{ ti.xcom_pull(task_ids='create-emr-serverless-app', key='return_value') }}",
     )
 
     extract_col >> load_col
