@@ -40,10 +40,7 @@ with DAG(
     )
 
     extract_crime = LambdaInvokeFunctionOperator(
-        task_id="ingest-crime", 
-        function_name="extract-crime-data", 
-        aws_conn_id="my_aws_connection", 
-        retries=3
+        task_id="ingest-crime", function_name="extract-crime-data", aws_conn_id="my_aws_connection", retries=3
     )
 
     load_crime = LambdaInvokeFunctionOperator(
@@ -55,10 +52,7 @@ with DAG(
     )
 
     extract_listing = LambdaInvokeFunctionOperator(
-        task_id="ingest-listing", 
-        function_name="extract-listing-data", 
-        aws_conn_id="my_aws_connection", 
-        retries=3
+        task_id="ingest-listing", function_name="extract-listing-data", aws_conn_id="my_aws_connection", retries=3
     )
 
     load_listing = LambdaInvokeFunctionOperator(
@@ -120,4 +114,4 @@ with DAG(
     extract_col >> load_col
     extract_crime >> load_crime
     extract_listing >> load_listing
-    [load_col, load_crime, load_listing] >> create_serverless_app >> run_spark_job >> delete_app
+    [load_col, load_crime, load_listing, create_serverless_app] >> run_spark_job >> delete_app
