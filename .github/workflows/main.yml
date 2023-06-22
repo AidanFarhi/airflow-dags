@@ -10,7 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v2
     - uses: lookback/s3-copy-action@master
       env:
         AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
