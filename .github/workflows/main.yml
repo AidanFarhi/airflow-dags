@@ -3,19 +3,28 @@ name: Upload dags to S3
 
 on:
   push:
-    branches:
-    - main
+    branches: main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: lookback/s3-copy-action@main
-      env:
-        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: 'us-east-1'
-        SOURCE_DIR: 'dags'
-        DEST_DIR: 'dags'
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+        run: yarn install
+        run: yarn build
+        run: yarn test
+      - name: Push build to S3
+        uses: sai-sharan/aws-s3-sync-action@master
+        with:
+          access_key: ${{ secrets.AWS_ACCESS_KEY_ID}}
+          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: 'us-east-1'
+          source: 'dags'
+          destination_bucket: ${{ secrets.AWS_S3_BUCKET }}
+          destination_prefix: ${{ secrets.AWS_S3_DESTINATION_PREFIX }}
+          delete: true
+          quiet: false
