@@ -40,7 +40,10 @@ with DAG(
     )
 
     extract_crime = LambdaInvokeFunctionOperator(
-        task_id="ingest-crime", function_name="extract-crime-data", aws_conn_id="my_aws_connection", retries=3
+        task_id="ingest-crime", 
+        function_name="extract-crime-data", 
+        aws_conn_id="my_aws_connection", 
+        retries=3
     )
 
     load_crime = LambdaInvokeFunctionOperator(
@@ -52,7 +55,11 @@ with DAG(
     )
 
     extract_listing = LambdaInvokeFunctionOperator(
-        task_id="ingest-listing", function_name="extract-listing-data", aws_conn_id="my_aws_connection", retries=3
+        task_id="ingest-listing", 
+        function_name="extract-listing-data", 
+        aws_conn_id="my_aws_connection", 
+        retries=3,
+        execution_timeout=timedelta(minutes=10)
     )
 
     load_listing = LambdaInvokeFunctionOperator(
