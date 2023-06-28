@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, date
 from airflow import DAG
 from airflow.models import Variable
 from airflow.providers.amazon.aws.operators.lambda_function import LambdaInvokeFunctionOperator
+from airflow.providers.amazon.aws.operators.cloud_formation import CloudFormationCreateStackOperator, CloudFormationDeleteStackOperator
+from airflow.providers.amazon.aws.sensors.cloud_formation import CloudFormationCreateStackSensor, CloudFormationDeleteStackSensor
 from airflow.providers.amazon.aws.operators.emr import (
     EmrServerlessCreateApplicationOperator,
     EmrServerlessStartJobOperator,
@@ -24,6 +26,23 @@ with DAG(
     catchup=False,
     tags=["location-iq"],
 ) as dag:
+    
+    create_stack = CloudFormationCreateStackOperator(
+        task_id='create_stack',
+        stack_name=Variable.get('CLOUDFORMATION_STACK_NAME'),
+        cloudformation_parameters={
+            "StackName": Variable.get('CLOUDFORMATION_STACK_NAME'),
+            "TemplateURL": Variable.get('EMR_CLOUDFORMATION_TEMPLATE_URL')
+        },
+        aws_conn_id='my_aws_connection'
+    )
+
+    wait_for_stack_create = CloudFormationCreateStackSensor(
+        task_id='wait_for_stack_create',
+        stack_name=Variable.get('CLOUDFORMATION_STACK_NAME'),
+        aws_conn_id='my_aws_connection'
+    )
+
     extract_col = LambdaInvokeFunctionOperator(
         task_id="ingest-cost-of-living",
         function_name="extract-cost-of-living-data",
@@ -118,7 +137,26 @@ with DAG(
         application_id="{{ ti.xcom_pull(task_ids='create-emr-serverless-app', key='return_value') }}",
     )
 
+    delete_stack = CloudFormationDeleteStackOperator(
+        task_id='delete_stack',
+        stack_name=Variable.get('CLOUDFORMATION_STACK_NAME'),
+        aws_conn_id='my_aws_connection'
+    )
+
+    wait_for_stack_delete = CloudFormationDeleteStackSensor(
+        task_id="wait_for_stack_delete",
+        stack_name=Variable.get('CLOUDFORMATION_STACK_NAME'),
+        aws_conn_id='my_aws_connection'
+    )
+
+    create_stack >> wait_for_stack_create
     extract_col >> load_col
     extract_crime >> load_crime
     extract_listing >> load_listing
-    [load_col, load_crime, load_listing, create_serverless_app] >> run_spark_job >> delete_app
+    [
+        load_col, 
+        load_crime, 
+        load_listing, 
+        create_serverless_app, 
+        wait_for_stack_create
+    ] >> run_spark_job >> delete_app >> delete_stack >> wait_for_stack_delete
